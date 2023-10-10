@@ -32,6 +32,13 @@ def check_http2(domain_names=None,CIDR=None,supportedOnly=False):
     if CIDR != None:
         ips = [str(ip) for ip in ipaddress.IPv4Network(CIDR,False)]
         hosts.extend(ips)
+    # attempt to do a reverse lookup, sometimes you'll want hostname over IP b/c of host headers
+        for ip in ips:
+            lookup = socket.getnameinfo((ip, 0),0)[0]
+            if lookup != ip:
+                hosts.append(lookup)
+    # dedupe
+    hosts = list(set(hosts))
     for d in hosts:
         result = {"host":d,"http2_support":False}
         try:
