@@ -22,17 +22,21 @@ def test_h2(host):
         s.close()
     return protocol
 
-def check_http2(domain_names=None,CIDR=None,supportedOnly=False):
+def check_http2(domain_names=None,CIDRs=None,supportedOnly=False):
     results = []
     hosts = []
     if domain_names != None:
         if not isinstance(domain_names,list):
             domain_names = [domain_names]
         hosts.extend(domain_names)
-    if CIDR != None:
-        ips = [str(ip) for ip in ipaddress.IPv4Network(CIDR,False)]
+    if CIDRs != None:
+        if not isinstance(CIDRs,list):
+            CIDRs = [CIDRs]
+        ips = []
+        for CIDR in CIDRs:
+            ips.extend([str(ip) for ip in ipaddress.IPv4Network(CIDR,False)])
         hosts.extend(ips)
-    # attempt to do a reverse lookup, sometimes you'll want hostname over IP b/c of host headers
+        # attempt to do a reverse lookup, sometimes you'll want hostname over IP b/c of host headers
         for ip in ips:
             lookup = socket.getnameinfo((ip, 0),0)[0]
             if lookup != ip:
@@ -56,10 +60,10 @@ def check_http2(domain_names=None,CIDR=None,supportedOnly=False):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-d", "--domains", help="Space delimited domains to check http2 support for.", type=str, nargs='*', default=None)
-    parser.add_argument("-c", "--CIDR", help="CIDR to check http2 support for",type=str, default=None)
+    parser.add_argument("-c", "--CIDRs", help="CIDRs to check http2 support for",type=str, nargs="*", default=None)
     parser.add_argument("-so", "--supportedOnly", help="Only return hosts/domains that support http2",default=False, action='store_true')
     args = parser.parse_args()
     if len(sys.argv) > 1:
-        print("\n".join(["{0}:{1}".format(d['host'],d['http2_support']) for d in check_http2(args.domains,args.CIDR,args.supportedOnly)]))
+        print("\n".join(["{0}:{1}".format(d['host'],d['http2_support']) for d in check_http2(args.domains,args.CIDRs,args.supportedOnly)]))
     else:
         parser.print_help()
